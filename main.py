@@ -2,16 +2,17 @@ import os
 
 from auth.githubauth import GitHubAuth
 from auth.openaiauth import OAIAuth
-from auth.secrets import GithubKey, OpenAIKey
 from helpers.instancelogger import InstanceLogger
+from dotenv import load_dotenv
 
 if __name__ == '__main__':
     # First, we Init an instance for logging
     logger = InstanceLogger("structure-testing")
 
     # Second We Authenticate
-    github = GitHubAuth(logger, GithubKey)
-    openai = OAIAuth(logger, OpenAIKey)
+    load_dotenv()
+    github = GitHubAuth(logger, os.environ.get("GithubKey"))
+    openai = OAIAuth(logger, os.environ.get("OpenAIKey"))
 
     # Next, we give it article data
     # creating a pdf file object
