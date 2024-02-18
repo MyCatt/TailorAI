@@ -48,3 +48,8 @@ class InstanceLogger:
     def log_code(self, source, lang, content):
         with open(self.session_path + "/log.md", 'a', encoding="utf-8") as f:
             f.write(f'[{source}]\n\n```{lang}\n\n{str(content)}\n\n```\n\n')
+
+    def log_standard(self, source, meta):
+        with open(self.session_path + "/log.md", 'a', encoding="utf-8") as f:
+            f.write(str(f'[{source}] \n') + str(meta) + "\n\n")
+

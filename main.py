@@ -20,20 +20,14 @@ if __name__ == '__main__':
     content = str(source.read())
 
     # Try a Prompt
-    print("EXTRCTING FEATURES")
-    feature_list = openai.prompt("AnalyzeThenExtract", content)
+    print("> EXTRACTING FEATURES")
+    feature_list = openai.prompt("ExtractFeatureList", content)
 
-    raise Exception()
+    print("> RESEARCHING FEATURES")
+    summarised_feature_list = openai.prompt("ResearchFeatures", content + "\n***\n" + feature_list)
 
-    print("RESEARCHING FEATURES")
-    for file in os.listdir("InputDir/references/"):
-        filename = os.fsdecode(file)
-        print("|")
-        print("|-- ", filename, sep="")
-        source = open(f"InputDir/references/{filename}", 'rb')
-        content = str(source.read())
-        feature_list = openai.prompt("ImproveFeature2", feature_list + "\n\n#?#\n\n" + content)
+    print("> GENERATING SUMMARY")
+    article = openai.prompt("GenerateGlobalSummary", summarised_feature_list)
 
-    print("GENERATING SUMMARY")
-    article = openai.prompt("Summarise", feature_list)
-
+    print("> GENERATING PERSONAL")
+    article = openai.prompt("GeneratePersonalSummary", summarised_feature_list)

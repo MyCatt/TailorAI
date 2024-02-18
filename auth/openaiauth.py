@@ -70,6 +70,6 @@ class OAIAuth:
         if response_message.strip().startswith("{"):
             self.logger.log_code("OpenAI", "json", response_message)
         else:
-            self.logger.log_meta("OpenAI", response_message)
+            self.logger.log_standard("OpenAI", response_message)
 
         return response_message
