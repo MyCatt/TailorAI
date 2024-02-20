@@ -48,27 +48,28 @@ def main():
             {"role": "user",
              "content": "In the context of Dynamics 365 Finance and the feature: " + feature +
                         ", research the feature and dump all knowledge that you can discover. Be very specific."
-                        "Your response you be paragraphs not lists. "
+                        "Your response you be paragraphs not lists."
              }
         ], )
         researched[feature]['research'] = research
         summarised = openai.raw_prompt([  # Feeding prompt() with same key results in the content being static to key1
             {"role": "user",
-             "content": "In the context of Dynamics 365 Finance and the feature: " + feature +
+             "content": "In the context of Dynamics 365 Finance and this feature: " + feature +
                         ", research the feature and provide an overview summary of its inclusion in the provided "
-                        "software release notes. You have been provided with these notes and also some extra "
+                        "software release notes - ensure you capture all important information and facts."
+                        "You have been provided with these notes and also some extra "
                         "information about the feature (outside of the context of the update) to help you with "
                         "this. Highlight the core information without using positive or negative language, "
                         "building/mutating upon it's description in the original notes and ensure that the "
                         "intent is to teach users about how this feature has changed in this release (for better or "
                         "worse). You do not work for Microsoft and your writing must always be neutral and in a "
-                        "academic paper like tone/writing style. "
+                        "academic paper like tone/writing style."
                         "These 2 documents are separated by '***'\n\n" + markdown_string +
                         "\n\n***\n\n" + research
              }
         ], )
         researched[feature]['releaseNotesSummary'] = summarised
-        # break  # Testing first feature to save $$$$
+        break  # Testing first feature to save $$$$
 
     print("> GENERATING SUMMARY")
     openai.change_model("gpt-3.5-turbo-0125")
@@ -78,7 +79,9 @@ def main():
     for feature in researched.keys():
         output += feature + "\n"
         output += researched[feature]['releaseNotesSummary'] + "\n\n\n"
+
     logger.log_raw_data("main", "final article", output)
+
     # print("> GENERATING PERSONAL")
     # article = openai.prompt("GeneratePersonalSummary", summarised_feature_list)
 

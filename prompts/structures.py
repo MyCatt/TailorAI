@@ -35,13 +35,20 @@ prompts = {
              "content": "Examine the provided software release notes and compile a list of all mentioned features, "
                         "including minor updates, enhancements, and fixes, in addition to the core features "
                         "previously identified. Exclude any ancillary information such as introductory remarks, "
-                        "detailed descriptions, headers, labels, and categorization labels. Focus exclusively on the "
-                        "names or key identifiers of each feature, regardless of its significance. Present the "
-                        "comprehensive list in a JSON array with the key 'all_features', ensuring a single-layer "
-                        "structure with no sub-lists or additional formatting. "
+                        "detailed descriptions, headers (like, 'Feature enhancements'), labels, modules, and categorization labels. Focus "
+                        "exclusively on the names or key identifiers of each feature, regardless of its significance. "
+                        "Present the comprehensive list in a JSON array with the key 'all_features', ensuring a "
+                        "single-layer structure with no sub-lists, duplicated or additional formatting. "
              },
             {"role": "user",
-             "content": "Merge these json objects into the same json object. They keys should be each indiviual "
+             "content": "Examine the provided software release notes and compile a list of all important details "
+                        "relating to the captured features from the last 2 prompts. Include only information that is "
+                        "vital for illustrating the intent and purpose of the features inclusion in the software "
+                        "release notes. You should include any facts mentioned about the feature in the article."
+                        "Include this to the json generated in the last task."
+             },
+            {"role": "user",
+             "content": "Merge these json objects into the same json object. They keys should be each individual "
                         "feature names. For each feature object, add a key value pair that says if it's a core "
                         "feature. Every feature from those 2 results must be included in the final output. "
              }
