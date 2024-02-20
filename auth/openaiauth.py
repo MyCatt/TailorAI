@@ -75,16 +75,7 @@ class OAIAuth:
 
         return embedding_array
 
-    def get_prompt_from_key(self, key):
-        return structures.prompts[key]
-
-    def prompt(self, prompt_key, content, response_format="text"): #str(article)
-
-        prompt = structures.prompts[prompt_key]
-
-        for i in range(len(prompt)):
-            prompt[i]['content'] = prompt[i]['content'].replace("{CONTENT}", f"{content}")
-            self.logger.log_raw_data("OpenAI", "Prompt", prompt[i]['content'])
+    def prompt(self, prompt, response_format="text"): #str(article)
 
         # Roughly count tokens, exception raised if limit is hit.
         self.num_tokens_from_string(str(prompt))
@@ -106,26 +97,3 @@ class OAIAuth:
 
         return response_message
 
-    def raw_prompt(self, prompt, response_format="text"): #str(article)
-
-        self.logger.log_raw_data("OpenAI", "Prompt", prompt)
-
-        # Roughly count tokens, exception raised if limit is hit.
-        self.num_tokens_from_string(str(prompt))
-
-        if response_format == "json_object":
-            prompt = [{"role": "system", "content": "Your response must be in json object format"}] + prompt
-
-        response = self.auth.chat.completions.create(messages=prompt, model="gpt-3.5-turbo", response_format={"type": response_format})
-        response_message = response.choices[0].message.content
-
-        if response_message.strip().startswith("{"):
-            self.logger.log_code("OpenAI", "json", response_message)
-        else:
-            self.logger.log_standard("OpenAI", response_message)
-
-        total_tokens = response.usage.total_tokens
-        self.logger.log_standard("OpenAI", "Model: " + self.model + "\nTokens Used: " + str(total_tokens) + "\n" + "Cost: $" + str(self.calc_cost(total_tokens)))
-        self.accrue_tokens(total_tokens)
-
-        return response_message

@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import time
@@ -12,6 +13,7 @@ from dotenv import load_dotenv
 from helpers.instancelogger import InstanceLogger
 
 from prompts import structures
+from prompts.promptbuilder import build_prompt
 
 
 def main():
@@ -20,7 +22,7 @@ def main():
 
     # Second We Authenticate
     load_dotenv()
-    github = GitHubAuth(logger, os.environ.get("GithubKey"))
+    # github = GitHubAuth(logger, os.environ.get("GithubKey"))
     openai = OAIAuth(logger, os.environ.get("OpenAIKey"))
 
     # Next, we give it article data
@@ -31,7 +33,8 @@ def main():
     # Try a Prompt
     print("> EXTRACTING FEATURES")
     openai.change_model("gpt-4-0125-preview")
-    feature_list = openai.prompt("ExtractFeatureList", markdown_string, "json_object")  # Json Object Returned
+    extract_feature_list = build_prompt("ExtractFeatureList", CONTENT=markdown_string)
+    feature_list = openai.prompt(extract_feature_list, "json_object")  # Json Object Returned
     feature_json = json.loads(feature_list)
 
     openai.change_model("gpt-3.5-turbo-0125")
@@ -41,49 +44,55 @@ def main():
     print("> RESEARCHING FEATURES")
     openai.change_model("gpt-4-0125-preview")
     researched = {}
+    i = 0
+
     for feature in feature_json:
         print(">>", feature)
+
+        research = ""
         researched[feature] = feature_json[feature]
-        research = openai.raw_prompt([  # Feeding prompt() with same key results in the content being static to key1
-            {"role": "user",
-             "content": "In the context of Dynamics 365 Finance and the feature: " + feature +
-                        ", research the feature and dump all knowledge that you can discover. Be very specific."
-                        "Your response you be paragraphs not lists."
-             }
-        ], )
-        researched[feature]['research'] = research
-        summarised = openai.raw_prompt([  # Feeding prompt() with same key results in the content being static to key1
-            {"role": "user",
-             "content": "In the context of Dynamics 365 Finance and this feature: " + feature +
-                        ", research the feature and provide an overview summary of its inclusion in the provided "
-                        "software release notes - ensure you capture all important information and facts."
-                        "You have been provided with these notes and also some extra "
-                        "information about the feature (outside of the context of the update) to help you with "
-                        "this. Highlight the core information without using positive or negative language, "
-                        "building/mutating upon it's description in the original notes and ensure that the "
-                        "intent is to teach users about how this feature has changed in this release (for better or "
-                        "worse). You do not work for Microsoft and your writing must always be neutral and in a "
-                        "academic paper like tone/writing style."
-                        "These 2 documents are separated by '***'\n\n" + markdown_string +
-                        "\n\n***\n\n" + research
-             }
-        ], )
+
+        # Format the prompt
+        feature_summary_prompt = build_prompt("FeatureSummary", FEATURE=feature, ORIGINAL=markdown_string, RESEARCH=research)
+        # Execute Prompt
+        summarised = openai.prompt(feature_summary_prompt)
+
+        # Add to the final dict
         researched[feature]['releaseNotesSummary'] = summarised
-        break  # Testing first feature to save $$$$
+        researched[feature]['research'] = research
+
+        # Format the prompt
+        #people_types_prompt = build_prompt("ExtractPeople", FEATURE=json.dumps(feature))
+
+        # Execute Prompt / Not working well 20/02 , needs work.
+        #people_types = openai.prompt(people_types_prompt, "json_object")
+        #researched[feature]['people'] = people_types
+
 
     print("> GENERATING SUMMARY")
     openai.change_model("gpt-3.5-turbo-0125")
-    # article = openai.prompt("GenerateGlobalSummary", researched)
-    #article = openai.prompt("Markdown", researched)
+
     output = ""
     for feature in researched.keys():
-        output += feature + "\n"
-        output += researched[feature]['releaseNotesSummary'] + "\n\n\n"
+        output += feature + "\n\n"
+        output += researched[feature]['releaseNotesSummary'] + "\n\n\n\n---\n\n\n"
 
     logger.log_raw_data("main", "final article", output)
 
-    # print("> GENERATING PERSONAL")
-    # article = openai.prompt("GeneratePersonalSummary", summarised_feature_list)
+    raise Exception()
+
+    print("> GENERATING PERSONAL")
+    # Format the prompt
+    personal_summary_prompt = build_prompt("ExtractRelevance", FEATURES=json.dumps(researched))
+
+    personal_summary = json.loads( openai.prompt(personal_summary_prompt, "json_object") )
+
+    output = ""
+    for feature in personal_summary.keys():
+        output += feature + "\n\n"
+        output += researched[feature]['releaseNotesSummary'] + "\n\n\n\n---\n\n\n"
+
+    logger.log_raw_data("main", "final article", output)
 
     openai.calc_runtime_cost()
 
